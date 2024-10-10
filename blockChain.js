@@ -7,13 +7,28 @@ class Block {
     this.timestamp = timestamp;
     this.previousBlockHash = previousBlockHash;
     this.currentBlockHash = this.calculateHash();
+    this.nonce = 0;
   }
 
   calculateHash() {
     return crypto
       .createHash('sha256')
-      .update(JSON.stringify(this.data))
+      .update(
+        this.index + JSON.stringify(this.data) + this.timestamp + this.nonce
+      )
       .digest('hex');
+  }
+
+  mineBlock(difficulty) {
+    while (
+      this.currentBlockHash.substring(0, difficulty) !==
+      Array(difficulty + 1).join(0)
+    ) {
+      this.nonce++;
+      this.currentBlockHash = this.calculateHash();
+    }
+
+    console.log('Block Mined: ', this.currentBlockHash);
   }
 }
 
@@ -22,17 +37,23 @@ export default class BlockChain {
 
   constructor() {
     this.blockChain.push(new Block(0, 'genesis', new Date(), ''));
+    this.difficulty = 4;
   }
 
   addBlockToChain(data) {
-    this.blockChain.push(
-      new Block(
-        this.blockChain.length,
-        data,
-        new Date(),
-        this.blockChain[this.blockChain.length - 1].currentBlockHash
-      )
+    const newBlock = new Block(
+      this.blockChain.length,
+      data,
+      new Date(),
+      this.blockChain[this.blockChain.length - 1].currentBlockHash
     );
+
+    newBlock.mineBlock(this.difficulty);
+    this.blockChain.push(newBlock);
+  }
+
+  getLatestBlock() {
+    return this.blockChain[this.blockChain.length - 1];
   }
 
   isBlockChainValid() {
