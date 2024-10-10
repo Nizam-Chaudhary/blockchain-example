@@ -1,9 +1,8 @@
 import crypto from 'crypto';
 
 class Block {
-  constructor(index, data, timestamp, previousBlockHash) {
-    this.index = index;
-    this.data = data;
+  constructor(transactions, timestamp, previousBlockHash) {
+    this.transactions = transactions;
     this.timestamp = timestamp;
     this.previousBlockHash = previousBlockHash;
     this.currentBlockHash = this.calculateHash();
@@ -14,7 +13,10 @@ class Block {
     return crypto
       .createHash('sha256')
       .update(
-        this.index + JSON.stringify(this.data) + this.timestamp + this.nonce
+        this.index +
+          JSON.stringify(this.transactions) +
+          this.timestamp +
+          this.nonce
       )
       .digest('hex');
   }
@@ -32,24 +34,47 @@ class Block {
   }
 }
 
-export default class BlockChain {
-  blockChain = [];
-
+export class BlockChain {
   constructor() {
-    this.blockChain.push(new Block(0, 'genesis', new Date(), ''));
-    this.difficulty = 4;
+    this.blockChain = [new Block('genesis', new Date(), '')];
+    this.difficulty = 2;
+    this.pendingTransactions = [];
+    this.miningReward = 100;
   }
 
-  addBlockToChain(data) {
-    const newBlock = new Block(
-      this.blockChain.length,
-      data,
-      new Date(),
+  minePendingTransactions(miningRewardAddress) {
+    let block = new Block(
+      this.pendingTransactions,
+      Date.now(),
       this.blockChain[this.blockChain.length - 1].currentBlockHash
     );
+    block.mineBlock(this.difficulty);
+    console.log('block successfully mined');
+    this.blockChain.push(block);
 
-    newBlock.mineBlock(this.difficulty);
-    this.blockChain.push(newBlock);
+    this.pendingTransactions = [
+      new Transaction('', miningRewardAddress, this.miningReward),
+    ];
+  }
+
+  createTransactions(transaction) {
+    this.pendingTransactions.push(transaction);
+  }
+
+  getBalanceOfAddress(address) {
+    let balance = 0;
+    for (const block of this.blockChain) {
+      for (const transaction of block.transactions) {
+        if (transaction.from === address) {
+          balance -= transaction.amount;
+        }
+
+        if (transaction.to === address) {
+          balance += transaction.amount;
+        }
+      }
+    }
+    return balance;
   }
 
   getLatestBlock() {
@@ -70,5 +95,13 @@ export default class BlockChain {
     }
 
     return true;
+  }
+}
+
+export class Transaction {
+  constructor(from, to, amount) {
+    this.from = from;
+    this.to = to;
+    this.amount = amount;
   }
 }

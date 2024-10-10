@@ -1,19 +1,18 @@
-import BlockChain from './blockChain.js';
+import { BlockChain, Transaction } from './blockChain.js';
 
 const blockChain = new BlockChain();
 
-console.log('Mining Block 1');
-blockChain.addBlockToChain({
-  name: 'Foo Bar',
-  age: '28',
-  mobile: '1234567890',
-});
+blockChain.createTransactions(new Transaction('address1', 'address2', 100));
+blockChain.createTransactions(new Transaction('address2', 'address1', 50));
 
-console.log('Mining Block 2');
-blockChain.addBlockToChain({
-  name: 'John Doe',
-  age: '30',
-  mobile: '1234567890',
-});
+console.log('\n starting the miner');
+blockChain.minePendingTransactions('xavier');
 
-// console.log(JSON.stringify(blockChain, null, 4));
+console.log('\n Balance of xavier', blockChain.getBalanceOfAddress('xavier'));
+
+console.log('\n starting the miner again');
+blockChain.minePendingTransactions('xavier');
+
+console.log('\n Balance of xavier', blockChain.getBalanceOfAddress('xavier'));
+
+console.log(JSON.stringify(blockChain, null, 2));
